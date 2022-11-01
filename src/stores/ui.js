@@ -4,6 +4,7 @@ import {acceptHMRUpdate, defineStore} from "pinia";
 export const useUiStore = defineStore({
     id: 'ui',
     state: () => ({
+        darkMode: null,
         showModal: false,
         notification: {
             type: 'error',

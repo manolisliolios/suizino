@@ -1,15 +1,27 @@
 <script setup>
-import {reactive, watch} from "vue";
+import {onMounted, reactive, ref, watch} from "vue";
 import {walletAccess} from "../helpers/wallet";
 import {useUiStore} from "../stores/ui";
 import {logo} from "../assets/icons";
+import Modal from "./Modal.vue"
 
 const {provider, isPermissionGranted, logout, permissionGrantedError, requestWalletAccess, executeMoveCall, getAddress } = walletAccess();
 const uiStore = useUiStore();
 
-const profileNft = reactive({
+// component state
+const state = reactive({
+  showModal: true,
   profile: null
 });
+import { useDark, useToggle } from '@vueuse/core';
+const isDark = useDark();
+const toggleDark = useToggle(isDark);
+
+
+onMounted(()=>{
+  // setDarkMode(darkMode);
+})
+
 
 watch(permissionGrantedError, (val) => {
   if(val) uiStore.setNotification(val);
@@ -17,14 +29,14 @@ watch(permissionGrantedError, (val) => {
 
 watch(isPermissionGranted, val => {
   if(val){
-    uiStore.setNotification('Successfull login', 'success');
+    uiStore.setNotification('Successfully logged in.', 'success');
     getCasinoProfileNFT();
   }
 });
 
 const disconnect = () => {
   logout();
-  profileNft.profile = null;
+  state.profile = null;
 }
 
 const mintPersonalNFT = (description, image) => {
@@ -73,7 +85,7 @@ const getCasinoProfileNFT = () => {
         // we need to mint our profile NFT!
         return;
       }
-      profileNft.profile = validObject.details.data.fields;
+      state.profile = validObject.details.data.fields;
 
     })
   }).catch(e =>{
@@ -86,24 +98,35 @@ if(isPermissionGranted) getCasinoProfileNFT();
 <template>
   <header id="header" class="container">
 
-    <div class=" px-5">
-      <div class="grid grid-cols-2 gap-5 py-6 items-center">
+      <div class="grid grid-cols-12 gap-5 py-6 items-center">
 
-        <div>
+        <div class="col-span-4">
 
-          <h3 class="text-2xl text-gray-800">
+          <h3 class="text-2xl">
             Suizino
           </h3>
 
+
         </div>
 
-        <div class="justify-self-end flex items-center">
+        <div class="col-span-8 justify-self-end flex items-center">
 
-          <div v-if="isPermissionGranted && profileNft.profile" class="mr-2 flex items-center text-sm">
-            <img :src="profileNft.profile.url" class="w-[35px] h-[35px] rounded-full mr-2">
-            Welcome back, {{profileNft.profile.description}}
+
+          <button @click="toggleDark()" class="mr-3">
+            <svg v-if="!isDark" id="theme-toggle-dark-icon" class=" w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+              <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+            <svg v-if="isDark" id="theme-toggle-light-icon" class=" w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+              <path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"
+                                                                                                                                                               fill-rule="evenodd" clip-rule="evenodd">
+            </path>
+            </svg>
+          </button>
+          <div v-if="isPermissionGranted && state.profile" class="mr-2 flex items-center text-sm">
+            <img :src="state.profile.url" class="w-[35px] h-[35px] rounded-full mr-2">
+            Welcome back, {{state.profile.description}}
           </div>
-          <button v-if="!isPermissionGranted" class="bg-gray-800 flex items-center text-white px-3 py-2 rounded-full" @click="requestWalletAccess()">
+          <button v-if="!isPermissionGranted"
+                  class="bg-gray-800 dark:bg-gray-800 flex items-center text-white px-5 py-2 rounded-full" @click="requestWalletAccess()">
             <div v-html="logo" class="logo-icon"></div> Connect Sui Wallet
           </button>
 
@@ -113,8 +136,18 @@ if(isPermissionGranted) getCasinoProfileNFT();
         </div>
 
       </div>
-    </div>
+      
+<!--      <Modal v-if="state.showModal" @closeModal="state.showModal = false">-->
 
+<!--        <form>-->
+<!--          <div class="mb-6">-->
+<!--            <label for="email" class="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300">Your email</label>-->
+<!--            <input type="email" id="email" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5-->
+<!--            dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="" required>-->
+<!--          </div>-->
+<!--        </form>-->
+
+<!--      </Modal>-->
 
   </header>
 </template>

@@ -1,22 +1,22 @@
 import {JsonRpcProvider, JsonRpcProviderWithCache} from "@mysten/sui.js";
 import {suiRpcUrl} from "./constants";
 import {computed, onMounted, ref} from "vue";
+import {useAuthStore} from "../stores/auth";
 
 const provider = new JsonRpcProvider(suiRpcUrl);
 const suiWallet = window.suiWallet;
 
-export function walletAccess() {
-    const permissionGrantedError = ref("");
-    const userSuiAddress = ref(null);
-    const updateSuiAddress = (address) => {
 
-        if(address){
-            userSuiAddress.value = address;
-            localStorage.setItem('user_sui_address', address);
-        }else{
-            userSuiAddress.value = null;
-            localStorage.removeItem('user_sui_address');
-        }
+export function walletAccess() {
+    const authStore = useAuthStore();
+    const permissionGrantedError = ref("");
+
+
+    const updateSuiAddress = (address) => {
+        if(address) localStorage.setItem('user_sui_address', address);
+        else localStorage.removeItem('user_sui_address');
+        authStore.hasWalletPermission = !!address;
+        authStore.userSuiAddress = address || null
     }
 
     const walletAddress = localStorage.getItem('user_sui_address');
@@ -39,12 +39,12 @@ export function walletAccess() {
 
     // returns wallet address
     const getAddress = () => {
-        return userSuiAddress.value;
+        return authStore.userSuiAddress;
     }
 
     // checks if we have a sui address to do any requests
     const isPermissionGranted = computed(() => {
-        return userSuiAddress.value !== null;
+        return authStore.userSuiAddress !== null;
     });
 
     // remove saved wallet address. Can't revoke permissions yet.
