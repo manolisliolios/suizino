@@ -4,7 +4,10 @@ import {walletAccess} from "../helpers/wallet";
 import {useUiStore} from "../stores/ui";
 import {logo} from "../assets/icons";
 import Modal from "./Modal.vue"
+import {moduleAddress, moduleName, casinoAddress} from "../helpers/constants";
 
+
+console.log(window.suiWallet);
 const {provider, isPermissionGranted, logout, permissionGrantedError, requestWalletAccess, executeMoveCall, getAddress } = walletAccess();
 const uiStore = useUiStore();
 
@@ -69,6 +72,28 @@ const burnNFT = (id) => {
   });
 }
 
+
+// gamble(state.profile);
+const depositToCasino = async () => {
+
+  const address = getAddress();
+  if(!address) return;
+
+  return executeMoveCall({
+        packageObjectId: moduleAddress,
+        module: moduleName,
+        typeArguments: [],
+        arguments: ["0x945274fcbaa05b9fe1c04499fda3215a271f5171",casinoAddress,"5000", '0x1f2c403491553c1e3f9a9ea27260d020660e8f74'],
+        function: 'depositToCasino',
+        gasBudget: 1000
+  })
+}
+// depositToCasino();
+
+// depositToCasino().then(res=>{
+//   console.log(res);
+// })
+
 const getCasinoProfileNFT = () => {
 
   const address = getAddress();
@@ -125,6 +150,9 @@ if(isPermissionGranted) getCasinoProfileNFT();
             <img :src="state.profile.url" class="w-[35px] h-[35px] rounded-full mr-2">
             Welcome back, {{state.profile.description}}
           </div>
+
+<!--          <button class="bg-gray-800 dark:bg-gray-800 flex items-center text-white px-5 py-2 rounded-full mr-2" @click="executeGamble">gamble</button>-->
+<!--          <button class="bg-gray-800 dark:bg-gray-800 flex items-center text-white px-5 py-2 rounded-full" @click="depositToCasino">Deposit to Casino</button>-->
           <button v-if="!isPermissionGranted"
                   class="bg-gray-800 dark:bg-gray-800 flex items-center text-white px-5 py-2 rounded-full" @click="requestWalletAccess()">
             <div v-html="logo" class="logo-icon"></div> Connect Sui Wallet
@@ -134,20 +162,7 @@ if(isPermissionGranted) getCasinoProfileNFT();
             Logout
           </button>
         </div>
-
       </div>
-      
-<!--      <Modal v-if="state.showModal" @closeModal="state.showModal = false">-->
-
-<!--        <form>-->
-<!--          <div class="mb-6">-->
-<!--            <label for="email" class="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300">Your email</label>-->
-<!--            <input type="email" id="email" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5-->
-<!--            dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="" required>-->
-<!--          </div>-->
-<!--        </form>-->
-
-<!--      </Modal>-->
 
   </header>
 </template>

@@ -1,4 +1,4 @@
-import {JsonRpcProvider, JsonRpcProviderWithCache} from "@mysten/sui.js";
+import {JsonRpcProvider} from "@mysten/sui.js";
 import {suiRpcUrl} from "./constants";
 import {computed, onMounted, ref} from "vue";
 import {useAuthStore} from "../stores/auth";
@@ -70,5 +70,9 @@ export function walletAccess() {
         return suiWallet.executeMoveCall(params);
     }
 
-    return {provider, requestWalletAccess,getAddress,logout,executeMoveCall, isPermissionGranted, permissionGrantedError}
+    const executeTransaction = async (params) => {
+        return suiWallet.signAndExecuteTransaction(params);
+    }
+
+    return {provider, requestWalletAccess,getAddress,logout,executeMoveCall, isPermissionGranted, permissionGrantedError, executeTransaction}
 }
