@@ -39,9 +39,9 @@ const wheelSlots = reactive([
   }
 ]);
 
-let initialSpinInterval;
+let initialSpinInterval = ref();
 onMounted(()=>{
-  initialSpinInterval = setupSpinningInterval(120);
+  initialSpinInterval.value = setupSpinningInterval(120);
 });
 
 const executeGamble = () => {
@@ -110,7 +110,7 @@ const setupSpinningInterval = (timeout) => {
 }
 
 const clearSpinningInterval = () => {
-  clearInterval(initialSpinInterval);
+  clearInterval(initialSpinInterval.value);
 }
 
 onUnmounted(()=>{
@@ -125,7 +125,7 @@ const resetGame = () => {
   isLoading.value = false;
   gameStarted.value = false;
   gameResults.value = null;
-  setupSpinningInterval();
+  setupSpinningInterval(120);
 }
 const startGame = () => {
 }

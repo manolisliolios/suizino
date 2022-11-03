@@ -3,11 +3,8 @@ import {onMounted, reactive, ref, watch} from "vue";
 import {walletAccess} from "../helpers/wallet";
 import {useUiStore} from "../stores/ui";
 import {logo} from "../assets/icons";
-import Modal from "./Modal.vue"
 import {moduleAddress, moduleName, casinoAddress} from "../helpers/constants";
 
-
-console.log(window.suiWallet);
 const {provider, isPermissionGranted, logout, permissionGrantedError, requestWalletAccess, executeMoveCall, getAddress } = walletAccess();
 const uiStore = useUiStore();
 

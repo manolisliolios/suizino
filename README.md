@@ -1,6 +1,5 @@
 ![Suizino Wallet Design](https://mliolios.s3.eu-north-1.amazonaws.com/127.0.0.1_5173_(macbook).png)
-
-# Suizino dApp - Built on top of Sui
+## Suizino dApp - Built on Sui Blockchain
 
 This project is built on-top of Sui blockchain using a Sui smart contract.
 
@@ -38,14 +37,3 @@ See [Vite Configuration Reference](https://vitejs.dev/config/).
 ## Project Setup
 
 
-### Compile and Minify for Production
-
-```sh
-npm run build
-```
-
-### Lint with [ESLint](https://eslint.org/)
-
-```sh
-npm run lint
-```
