@@ -1,16 +1,17 @@
 import {JsonRpcProvider} from "@mysten/sui.js";
-import {suiRpcUrl} from "./constants";
+import {moduleAddress, suiRpcUrl} from "./constants";
 import {computed, onMounted, ref} from "vue";
 import {useAuthStore} from "../stores/auth";
+import {useUiStore} from "../stores/ui";
 
 const provider = new JsonRpcProvider(suiRpcUrl);
 const suiWallet = window.suiWallet;
 
 
-export function walletAccess() {
+export function useWallet() {
     const authStore = useAuthStore();
+    const uiStore = useUiStore();
     const permissionGrantedError = ref("");
-
 
     const updateSuiAddress = (address) => {
         if(address) localStorage.setItem('user_sui_address', address);
@@ -27,11 +28,45 @@ export function walletAccess() {
 
     const verifyWalletPermissions = () => {
         suiWallet.hasPermissions().then(res=>{
-            console.log(res);
-
-            if(!res) updateSuiAddress(null);
+            if(!res) return logout();
+            getUserCasinoOwnershipAndUserCoinAddresses();
         }).catch(e=>{
-            console.log(e);
+            logout();
+        });
+    }
+
+    // gets the user's object and checks if we have a casino ownership.
+    // We also keep a list of SUI Coin addresses to use for transactions.
+    const getUserCasinoOwnershipAndUserCoinAddresses = () => {
+        const address = getAddress();
+        if(!address) return;
+
+        provider.getObjectsOwnedByAddress(address).then(res =>{
+            let casinoOwnership = res.find(x => x.type.includes('CasinoOwnership') && x.type.startsWith(moduleAddress));
+            if(casinoOwnership){
+                authStore.casinoAdmin.isAdmin = true;
+                authStore.casinoAdmin.objectAddress = casinoOwnership.objectId;
+            }
+
+            let coinAddresses = res.filter(x => x.type.includes('Coin'));
+            console.log(coinAddresses);
+            provider.getObjectBatch(coinAddresses.map(x => x.objectId)).then(res=>{
+
+                const coins = res.map(x => {
+                    return {
+                        id: x?.details?.data?.fields?.id?.id,
+                        balance: x?.details?.data?.fields?.balance
+                    }
+                });
+                authStore.coins = coins;
+                console.log(authStore.coins);
+
+
+
+            })
+
+        }).catch(e =>{
+            uiStore.setNotification(e.message);
         });
     }
 
@@ -50,6 +85,7 @@ export function walletAccess() {
     // remove saved wallet address. Can't revoke permissions yet.
     const logout = () => {
         updateSuiAddress(null);
+        authStore.$reset();
     }
 
     // prompt to request access to the wallet.
@@ -58,11 +94,24 @@ export function walletAccess() {
         suiWallet.requestPermissions().then(async res=>{
             await suiWallet.getAccounts().then(accounts => {
                 updateSuiAddress(accounts[0]);
+                getUserCasinoOwnershipAndUserCoinAddresses();
             });
         }).catch(e=>{
             permissionGrantedError.value = "You need to give us Sui Wallet permissions to continue.";
             updateSuiAddress(null);
         });
+    }
+
+    const getSuitableCoinId = (amount) => {
+        console.log(authStore.coins);
+        let coinId = null;
+        for(let coin of authStore.coins){
+            if(coin.balance >= amount){
+                coinId = coin.id
+                break;
+            }
+        }
+        return coinId;
     }
 
 
@@ -74,5 +123,5 @@ export function walletAccess() {
         return suiWallet.signAndExecuteTransaction(params);
     }
 
-    return {provider, requestWalletAccess,getAddress,logout,executeMoveCall, isPermissionGranted, permissionGrantedError, executeTransaction}
+    return {provider, requestWalletAccess,getAddress,logout,executeMoveCall,getSuitableCoinId, isPermissionGranted, permissionGrantedError, executeTransaction}
 }

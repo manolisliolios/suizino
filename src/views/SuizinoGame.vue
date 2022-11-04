@@ -3,19 +3,23 @@ import {ref, onMounted,onUnmounted, reactive} from 'vue'
 import {logo} from "../assets/icons";
 import {useAuthStore} from "../stores/auth";
 import {casinoAddress, moduleAddress} from "../helpers/constants";
-import {walletAccess} from "../helpers/wallet";
+import {useWallet} from "../helpers/wallet";
 import {useUiStore} from "../stores/ui";
 
 const authStore = useAuthStore();
 const uiStore = useUiStore();
-const {executeMoveCall, getAddress} = walletAccess();
+const {executeMoveCall, getAddress, getSuitableCoinId} = useWallet();
 
-
+const gameStatuses = {
+  STANDBY: 'STANDBY',
+  LOSS: 'LOSS',
+  WIN: 'WIN'
+}
 const spinningList = ["❌", "🦄", "✅", "🐻️", "🤑"];
-
+const gameStatus = ref(gameStatuses.STANDBY);
 const gameStarted = ref(false);
 const isLoading = ref(false);
-
+const gameResultsObject = ref({});
 const gameResults = ref([]);
 const totalGames = ref(0);
 const wheelSlots = reactive([
@@ -52,15 +56,16 @@ const executeGamble = () => {
   gameStarted.value = true;
   isLoading.value = true;
 
+  const coinId = getSuitableCoinId(6000)
+
   executeMoveCall({
     packageObjectId: moduleAddress,
     module: 'Suizino_core',
     typeArguments: [],
-    arguments: [casinoAddress, '0x7d8894b58942a2d550ddedfe88fcfb3a20000321'],
+    arguments: [casinoAddress, coinId],
     function: 'gamble',
     gasBudget: 1000
   }).then(res =>{
-    console.log(res);
     totalGames.value++;
     const status = res?.effects?.status?.status;
 
@@ -69,9 +74,8 @@ const executeGamble = () => {
 
       let fields = SuizinoEventResult?.moveEvent?.fields;
 
+      gameResultsObject.value = fields;
       gameResults.value = [fields.slot_1, fields.slot_2, fields.slot_3];
-      console.log(gameResults);
-      console.log(fields.winnings);
       for(let [index, slot] of wheelSlots.entries()){
 
         setTimeout(()=>{
@@ -79,12 +83,14 @@ const executeGamble = () => {
         }, (index+2) * 600); // start wih 300ms difference
       }
 
+    }else{
+      uiStore.setNotification(res?.effects?.status?.error);
+      resetGame();
     }
   }).catch(e=>{
     resetGame();
 
     uiStore.setNotification(e.message);
-    console.log(e);
   })
 }
 
@@ -97,14 +103,14 @@ const setupSpinningInterval = (timeout) => {
 
       // if slot slection has started, we pick one and then break
       if(slot.started){
+        clearSpinningInterval();
         slot.randomSlides = [spinningList[gameResults.value[slot.id]]];
         slot.ended = true;
 
         if(slot.id === wheelSlots.length - 1) checkGameStatus();
         continue;
       }
-
-      slot.randomSlides = spinningList.sort(() => 0.5 - Math.random()).slice(0,3);
+      slot.randomSlides = [...spinningList].sort(() => 0.5 - Math.random()).slice(0,3);
     }
   }, timeout);
 }
@@ -125,18 +131,19 @@ const resetGame = () => {
   isLoading.value = false;
   gameStarted.value = false;
   gameResults.value = null;
+  gameStatus.value = gameStatuses.STANDBY;
+  gameResultsObject.value = {};
   setupSpinningInterval(120);
 }
 const startGame = () => {
 }
 
 const checkGameStatus = () =>{
-  clearSpinningInterval();
   gameStarted.value = false;
   isLoading.value = false;
   let hasWon = true;
   let icon = null;
-
+  gameStatus.value = gameResultsObject.value.winnings > 0 ? gameStatuses.WIN : gameStatuses.LOSS;
 
   for(let slot of wheelSlots){
     if(!icon) {
@@ -149,10 +156,6 @@ const checkGameStatus = () =>{
       break;
     }
   }
-
-  if(hasWon){
-    alert('BIG WIN!');
-  }
 }
 
 
@@ -160,6 +163,13 @@ const checkGameStatus = () =>{
 </script>
 
 <style>
+
+.lucky-wheel-slot.win{
+  @apply border-2 border-green-600;
+}
+.lucky-wheel-slot.loss{
+  @apply border-2 border-red-700;
+}
 </style>
 
 <template>
@@ -178,20 +188,20 @@ const checkGameStatus = () =>{
 
       </div>
       <div class="lucky-wheel-slots grid grid-cols-3 gap-2 md:gap-5">
-        <div v-for="slot of wheelSlots"
-             :key="slot.id"
-             :id="`wheel-slot-${slot.id}`"
+        <div v-for="slot of wheelSlots" :key="slot.id" :id="`wheel-slot-${slot.id}`"
              class="lucky-wheel-slot bg-white overflow-hidden dark:bg-gray-700 h-[250px] md:h-[320px] rounded-lg shadow flex items-center justify-center"
-          :class="slot.ended ? 'border border-gray-700' : ''">
+             :class="`${gameStatus.toLowerCase()}`">
 
           <div class="">
-            <div v-for="(item,index) in slot.randomSlides" class="block w-full text-center text-5xl md:text-6xl py-6 ">
+            <div v-for="(item) in slot.randomSlides" class="block w-full text-center text-5xl md:text-6xl py-6 ">
               {{item}}
             </div>
           </div>
 
         </div>
       </div>
+
+
       <div class="mt-6 text-center">
         <button v-if="authStore.hasWalletPermission"
                 class="bg-gray-800 mx-auto ease-in-out duration-500 hover:px-10 dark:bg-gray-800 flex items-center text-white px-5 py-2 rounded-full"

@@ -50,7 +50,7 @@ module mliolios::Suizino_core {
         transfer::share_object(Casino {
             id: object::new(ctx),
             name: string::utf8(b"Suizino"),
-            description: string::utf8(b"The most fair casino in the universe"),
+            description: string::utf8(b"A small unsafe Suizino. Created by Manolis Liolios"),
             cost_per_game: 5000,
             casino_balance: balance::zero()
         });
@@ -66,7 +66,7 @@ module mliolios::Suizino_core {
     }
 
     // let's play a game
-    public entry fun gamble(casino: &mut Casino, payment: &mut Coin<SUI>, ctx: &mut TxContext){
+    public entry fun gamble(casino: &mut Casino, wallet: &mut Coin<SUI>, ctx: &mut TxContext){
 
         // calculate max user earnings through the casino
         let max_earnings = casino.cost_per_game * MaxWinningsMultiplier; // we calculate the maximum potential winnings on the casino.
@@ -74,11 +74,11 @@ module mliolios::Suizino_core {
         // Make sure Casino has enough money to support this gameplay.
         assert!(casino_balance(casino) >= max_earnings, EOutOfService);
         // make sure we have enough money to play a game!
-        assert!(coin::value(payment) >= casino.cost_per_game, ENotEnoughMoney);
+        assert!(coin::value(wallet) >= casino.cost_per_game, ENotEnoughMoney);
 
 
         // get balance reference
-        let wallet_balance = coin::balance_mut(payment);
+        let wallet_balance = coin::balance_mut(wallet);
 
         // get money from balance
         let payment = balance::split(wallet_balance, casino.cost_per_game);
@@ -96,9 +96,11 @@ module mliolios::Suizino_core {
         let slot_2 = *vector::borrow(&randomNums, 1);
         let slot_3 = *vector::borrow(&randomNums, 2);
 
-        if(slot_1 == slot_2 && slot_2 == slot_3){
-            winnings = casino.cost_per_game * MaxWinningsMultiplier; // calculate winnings
 
+        if(slot_1 == slot_2 && slot_2 == slot_3){
+            winnings = casino.cost_per_game * (MaxWinningsMultiplier+1); // calculate winnings + the money the user spent.
+            let payment = balance::split(&mut casino.casino_balance, winnings); // get from casino's balance.
+            balance::join(coin::balance_mut(wallet), payment); // add to user's wallet!
             // add winnings to user's wallet
         };
 
@@ -121,6 +123,7 @@ module mliolios::Suizino_core {
     }
 
 
+    /* A function for admins to deposit money to the casino so it can still function!  */
     public entry fun depositToCasino(_:&CasinoOwnership, casino :&mut Casino, amount: u64, payment: &mut Coin<SUI>){
 
         let availableCoins = coin::value(payment);
@@ -133,10 +136,27 @@ module mliolios::Suizino_core {
 
     }
 
+    /*
+       A function for admins to get their profits.
+    */
+    public entry fun withdraw(_:&CasinoOwnership, casino: &mut Casino, amount: u64, wallet: &mut Coin<SUI>){
+
+        let availableCoins = casino_balance(casino);
+        assert!(availableCoins > amount, ENotEnoughMoney);
+
+        let balance = coin::balance_mut(wallet);
+
+        // split money from casino's balance.
+        let payment = balance::split(&mut casino.casino_balance, amount);
+
+        // execute the transaction
+        balance::join(balance, payment);
+    }
 
     /*
+        *** This is not production ready code. Please use with care ***
        Pseudo-random generator. requires VRF in the future to verify randomness! Now it just relies on
-       transaction ids. <Unreliable>
+       transaction ids.
     */
 
     fun pseudoRandomNumGenerator(uid: &UID):vector<u8>{

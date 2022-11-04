@@ -1,26 +1,23 @@
 <script setup>
-import {onMounted, reactive, ref, watch} from "vue";
-import {walletAccess} from "../helpers/wallet";
+import {reactive, watch} from "vue";
+import {useWallet} from "../helpers/wallet";
 import {useUiStore} from "../stores/ui";
 import {logo} from "../assets/icons";
 import {moduleAddress, moduleName, casinoAddress} from "../helpers/constants";
-
-const {provider, isPermissionGranted, logout, permissionGrantedError, requestWalletAccess, executeMoveCall, getAddress } = walletAccess();
+const {provider, isPermissionGranted, logout, permissionGrantedError, getSuitableCoinId, requestWalletAccess, executeMoveCall, getAddress } = useWallet();
 const uiStore = useUiStore();
+const authStore = useAuthStore();
 
 // component state
 const state = reactive({
   showModal: true,
   profile: null
 });
+
 import { useDark, useToggle } from '@vueuse/core';
+import {useAuthStore} from "../stores/auth";
 const isDark = useDark();
 const toggleDark = useToggle(isDark);
-
-
-onMounted(()=>{
-  // setDarkMode(darkMode);
-})
 
 
 watch(permissionGrantedError, (val) => {
@@ -30,91 +27,41 @@ watch(permissionGrantedError, (val) => {
 watch(isPermissionGranted, val => {
   if(val){
     uiStore.setNotification('Successfully logged in.', 'success');
-    getCasinoProfileNFT();
   }
 });
 
 const disconnect = () => {
   logout();
+
   state.profile = null;
-}
-
-const mintPersonalNFT = (description, image) => {
-  executeMoveCall({
-    packageObjectId: "0x2",
-    module: "devnet_nft",
-    function: "mint",
-    typeArguments: [],
-    arguments: ["Suizino_Profile", "Manolis Liolios", "https://picsum.photos/500/500"],
-    gasBudget: 1000
-  }).then(res =>{
-    console.log(res);
-  }).catch(e=>{
-    uiStore.setNotification(e.message);
-  });
-}
-
-const burnNFT = (id) => {
-  executeMoveCall({
-    packageObjectId: "0x2",
-    module: "devnet_nft",
-    function: "burn",
-    typeArguments: [],
-    arguments: [id],
-    gasBudget: 1000
-  }).then(res =>{
-    console.log(res);
-  }).catch(e=>{
-    uiStore.setNotification(e.message);
-  });
+  authStore.casinoAdmin.isAdmin = false;
+  authStore.casinoAdmin.objectAddress = null;
 }
 
 
-// gamble(state.profile);
+// deposits 50.000 to casino
 const depositToCasino = async () => {
 
+  if(!authStore.casinoAdmin.isAdmin) return; // only admins can deposit to casino.
   const address = getAddress();
   if(!address) return;
+
+  const amount = 500_000;
+  const coinId = getSuitableCoinId(amount);
 
   return executeMoveCall({
         packageObjectId: moduleAddress,
         module: moduleName,
         typeArguments: [],
-        arguments: ["0x945274fcbaa05b9fe1c04499fda3215a271f5171",casinoAddress,"5000", '0x1f2c403491553c1e3f9a9ea27260d020660e8f74'],
+        arguments: [authStore.casinoAdmin.objectAddress, casinoAddress,"500000", coinId],
         function: 'depositToCasino',
         gasBudget: 1000
+  }).then(res=>{
+    uiStore.setNotification( amount + " successfully deposited to casino", "success");
+  }).catch(e=>{
+    uiStore.setNotification(e.message);
   })
 }
-// depositToCasino();
-
-// depositToCasino().then(res=>{
-//   console.log(res);
-// })
-
-const getCasinoProfileNFT = () => {
-
-  const address = getAddress();
-  if(!address) return;
-
-  provider.getObjectsOwnedByAddress(address).then(res =>{
-    let nfts = res.filter(x => x.type.includes('DevNetNFT'));
-    provider.getObjectBatch(nfts.map(x => x.objectId)).then(res =>{
-
-      let validObject = res.find(x => x?.details?.data?.fields?.name === 'Suizino_Profile');
-
-      if(!validObject){
-
-        // we need to mint our profile NFT!
-        return;
-      }
-      state.profile = validObject.details.data.fields;
-
-    })
-  }).catch(e =>{
-    uiStore.setNotification(e.message);
-  });
-}
-if(isPermissionGranted) getCasinoProfileNFT();
 </script>
 
 <template>
@@ -143,14 +90,12 @@ if(isPermissionGranted) getCasinoProfileNFT();
             </path>
             </svg>
           </button>
-          <div v-if="isPermissionGranted && state.profile" class="mr-2 flex items-center text-sm">
-            <img :src="state.profile.url" class="w-[35px] h-[35px] rounded-full mr-2">
-            Welcome back, {{state.profile.description}}
-          </div>
+<!--          <div v-if="isPermissionGranted && state.profile" class="mr-2 flex items-center text-sm">-->
+<!--            <img :src="state.profile.url" class="w-[35px] h-[35px] rounded-full mr-2">Welcome back, {{state.profile.description}}-->
+<!--          </div>-->
 
-<!--          <button class="bg-gray-800 dark:bg-gray-800 flex items-center text-white px-5 py-2 rounded-full mr-2" @click="executeGamble">gamble</button>-->
-<!--          <button class="bg-gray-800 dark:bg-gray-800 flex items-center text-white px-5 py-2 rounded-full" @click="depositToCasino">Deposit to Casino</button>-->
-          <button v-if="!isPermissionGranted"
+          <button v-if="authStore.casinoAdmin.isAdmin" class="bg-gray-800 dark:bg-gray-800 flex items-center text-white px-5 py-2 mr-2 rounded-full" @click="depositToCasino">Deposit to Casino</button>
+          <button v-if="!authStore.hasWalletPermission"
                   class="bg-gray-800 dark:bg-gray-800 flex items-center text-white px-5 py-2 rounded-full" @click="requestWalletAccess()">
             <div v-html="logo" class="logo-icon"></div> Connect Sui Wallet
           </button>

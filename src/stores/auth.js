@@ -5,7 +5,12 @@ export const useAuthStore = defineStore({
     id: 'auth',
     state: () => ({
         hasWalletPermission: false,
-        userSuiAddress: null
+        userSuiAddress: null,
+        casinoAdmin: {
+            isAdmin: false,
+            objectAddress: null
+        },
+        coins: []
     }),
 
     actions:{
