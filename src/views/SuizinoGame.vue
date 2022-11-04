@@ -126,6 +126,7 @@ onUnmounted(()=>{
   clearSpinningInterval();
 });
 const resetGame = () => {
+  clearSpinningInterval();
   for(let slot of wheelSlots){
     slot.randomSlides = [];
     slot.started = false;
