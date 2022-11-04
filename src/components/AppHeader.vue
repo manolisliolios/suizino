@@ -32,28 +32,26 @@ watch(isPermissionGranted, val => {
 
 const disconnect = () => {
   logout();
-
   state.profile = null;
   authStore.casinoAdmin.isAdmin = false;
   authStore.casinoAdmin.objectAddress = null;
 }
 
-
-// deposits 50.000 to casino
+// deposits to casino
 const depositToCasino = async () => {
 
   if(!authStore.casinoAdmin.isAdmin) return; // only admins can deposit to casino.
   const address = getAddress();
   if(!address) return;
 
-  const amount = 500_000;
+  const amount = 1000000;
   const coinId = getSuitableCoinId(amount);
 
   return executeMoveCall({
         packageObjectId: moduleAddress,
         module: moduleName,
         typeArguments: [],
-        arguments: [authStore.casinoAdmin.objectAddress, casinoAddress,"500000", coinId],
+        arguments: [authStore.casinoAdmin.objectAddress, casinoAddress,amount, coinId],
         function: 'depositToCasino',
         gasBudget: 1000
   }).then(res=>{

@@ -76,11 +76,14 @@ const executeGamble = () => {
 
       gameResultsObject.value = fields;
       gameResults.value = [fields.slot_1, fields.slot_2, fields.slot_3];
+
+      // We just mark all slots as "started" and we let the interval that is already running
+      // take care of showing the results. To make it more smooth,
       for(let [index, slot] of wheelSlots.entries()){
 
         setTimeout(()=>{
           slot.started = true;
-        }, (index+2) * 600); // start wih 300ms difference
+        }, (index+1) * 600); // start wih 300ms difference
       }
 
     }else{
@@ -145,6 +148,12 @@ const checkGameStatus = () =>{
   let icon = null;
   gameStatus.value = gameResultsObject.value.winnings > 0 ? gameStatuses.WIN : gameStatuses.LOSS;
 
+  if(gameStatus.value === gameStatuses.WIN){
+    uiStore.setNotification("Congratulations 🎉! You won " + gameResultsObject.value.winnings + " MIST!", "success")
+  }
+  if(gameStatus.value === gameStatuses.LOSS){
+    uiStore.setNotification("😔 You were unlucky this time. maybe try an extra spin?")
+  }
   for(let slot of wheelSlots){
     if(!icon) {
       icon = slot.randomSlides[0];
@@ -218,11 +227,12 @@ const checkGameStatus = () =>{
           </div>
           <span v-else class="flex items-center">
             <div v-html="logo" class="logo-icon"></div>
-            {{totalGames === 0 ? 'SPIN NOW': 'PLAY AGAIN'}} <span class="ml-2 text-sm">(0.005 Sui)
+            {{totalGames === 0 ? 'SPIN NOW': 'PLAY AGAIN'}} <span class="ml-2 text-sm">(5000 Mist)
         </span>
           </span>
 
         </button>
+        <p class="text-xs mt-5">If you get all 3 slots equal, you win 25.000 MIST</p>
       </div>
     </div>
   </main>
