@@ -1,6 +1,8 @@
 ![Suizino Wallet Design](https://mliolios.s3.eu-north-1.amazonaws.com/127.0.0.1_5173_(macbook).png)
 ## Suizino dApp - Built on Sui Blockchain
 
+### [View Live Demo Here](https://manolisliolios.github.io/suizino/)
+
 This project is built on-top of Sui blockchain using a Sui smart contract.
 
 The front-end of the project is built using Vue3 and tailwind.
