@@ -49,7 +49,7 @@ export function useWallet() {
             }
 
             let coinAddresses = res.filter(x => x.type.includes('Coin'));
-            console.log(coinAddresses);
+
             provider.getObjectBatch(coinAddresses.map(x => x.objectId)).then(res=>{
 
                 const coins = res.map(x => {
@@ -59,10 +59,6 @@ export function useWallet() {
                     }
                 });
                 authStore.coins = coins;
-                console.log(authStore.coins);
-
-
-
             })
 
         }).catch(e =>{
@@ -103,7 +99,7 @@ export function useWallet() {
     }
 
     const getSuitableCoinId = (amount) => {
-        console.log(authStore.coins);
+
         let coinId = null;
         for(let coin of authStore.coins){
             if(coin.balance >= amount){

@@ -33,8 +33,6 @@ watch(isPermissionGranted, val => {
 const disconnect = () => {
   logout();
   state.profile = null;
-  authStore.casinoAdmin.isAdmin = false;
-  authStore.casinoAdmin.objectAddress = null;
 }
 
 // deposits to casino
