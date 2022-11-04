@@ -40,18 +40,5 @@ The random generation of numbers in the smart contract is unsafe.**
 - Run for development mode using <code>npm run dev</code>
 - You can build for deployment using <code>npm run build</code>
 
-### Run for development
-
-```sh
-npm run dev
-```
-
-### Build for deployment
-
-```sh
-npm run build
-```
-
-
 
 Sui wallet Link: https://chrome.google.com/webstore/detail/sui-wallet/opcgpfmipidbgpenhmajoajpbobppdil
