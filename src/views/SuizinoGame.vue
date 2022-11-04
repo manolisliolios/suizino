@@ -80,10 +80,10 @@ const executeGamble = () => {
       // We just mark all slots as "started" and we let the interval that is already running
       // take care of showing the results. To make it more smooth,
       for(let [index, slot] of wheelSlots.entries()){
-
-        setTimeout(()=>{
-          slot.started = true;
-        }, (index+1) * 600); // start wih 300ms difference
+        slot.started = true;
+        // setTimeout(()=>{
+        //
+        // }, (index+1) * 600); // start wih 300ms difference
       }
 
     }else{
