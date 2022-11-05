@@ -1,4 +1,4 @@
 export const suiRpcUrl = 'https://fullnode.devnet.sui.io:443'
-export const casinoAddress ='0xe3804c891c683a01e8bc110bf49aaef0999e84e5';
-export const moduleAddress = '0x7cec50ed7904cbba5c552a5036148e2127491718';
+export const casinoAddress ='0x2d04384b5e202ae3fb67d9c2abed64137d740354';
+export const moduleAddress = '0x1bd93b59956a9fbe579f8419e8133d7ae3b449f';
 export const moduleName = 'Suizino_core';
