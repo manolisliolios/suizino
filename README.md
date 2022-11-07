@@ -20,7 +20,7 @@ The random generation of numbers in the smart contract is unsafe.**
 
 
 ### Functionality
-- The front-end gives you connection capabilities with Sui Wallet. Without Sui Wallet, the app is not working.
+- The front-end gives you connection capabilities with Sui Wallet or Ethos Wallet.
 - If your address is the publishing address of the Casino, the client gives you a "deposit to casino" button to top-it up so users can play
 - If your address is the publishing address of the Casino, you have a "withdraw from casino" capability.
 - Client auto-fetches your CasinoOwnership (in case you have it of course) and your available Coin Tokens. It uses a (~random (the first that has enough balance from the jsonrpc response)) coin with enough funds to process the payment.
