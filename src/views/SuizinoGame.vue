@@ -213,9 +213,13 @@ const checkGameStatus = () =>{
 
 
       <div class="mt-6 text-center">
-        <button v-if="authStore.hasWalletPermission"
+
+        <button v-if="!authStore.hasWalletPermission" class="bg-gray-800 mx-auto ease-in-out duration-500 hover:px-10 dark:bg-gray-800 flex items-center text-white px-5 py-2 rounded-full" @click="authStore.toggleWalletAuthModal = true">
+          <div v-html="logo" class="logo-icon"></div> Connect your wallet to start playing!
+        </button>
+        <button v-else
                 class="bg-gray-800 mx-auto ease-in-out duration-500 hover:px-10 dark:bg-gray-800 flex items-center text-white px-5 py-2 rounded-full"
-                :class="isLoading ? 'opacity-70 cursor-default hover:px-5': ''"
+                :class="isLoading || !authStore.hasWalletPermission ? 'opacity-70 cursor-default hover:px-5': ''"
                 @click="executeGamble">
 
           <div v-if="isLoading">

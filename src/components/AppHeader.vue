@@ -1,21 +1,18 @@
 <script setup>
-import {reactive, watch} from "vue";
+import {onMounted, watch} from "vue";
 import {useWallet} from "../helpers/wallet";
 import {useUiStore} from "../stores/ui";
-import {logo} from "../assets/icons";
 import {moduleAddress, moduleName, casinoAddress} from "../helpers/constants";
-const {provider, isPermissionGranted, logout, permissionGrantedError, getSuitableCoinId, requestWalletAccess, executeMoveCall, getAddress } = useWallet();
+const {
+  walletProviders,
+  isPermissionGranted, logout, permissionGrantedError,verifyWalletPermissions, getSuitableCoinId, requestWalletAccess, executeMoveCall, getAddress } = useWallet();
+import { useDark, useToggle } from '@vueuse/core';
+import {useAuthStore} from "../stores/auth";
+import Modal from "./Modal.vue";
+
 const uiStore = useUiStore();
 const authStore = useAuthStore();
 
-// component state
-const state = reactive({
-  showModal: true,
-  profile: null
-});
-
-import { useDark, useToggle } from '@vueuse/core';
-import {useAuthStore} from "../stores/auth";
 const isDark = useDark();
 const toggleDark = useToggle(isDark);
 
@@ -25,9 +22,7 @@ watch(permissionGrantedError, (val) => {
 });
 
 watch(isPermissionGranted, val => {
-  if(val){
-    uiStore.setNotification('Successfully logged in.', 'success');
-  }
+  if(val){uiStore.setNotification('Successfully logged in.', 'success')}
 });
 
 const disconnect = () => {
@@ -35,6 +30,9 @@ const disconnect = () => {
   state.profile = null;
 }
 
+onMounted(()=>{
+
+})
 // deposits to casino
 const depositToCasino = async () => {
 
@@ -86,14 +84,15 @@ const depositToCasino = async () => {
             </path>
             </svg>
           </button>
-<!--          <div v-if="isPermissionGranted && state.profile" class="mr-2 flex items-center text-sm">-->
-<!--            <img :src="state.profile.url" class="w-[35px] h-[35px] rounded-full mr-2">Welcome back, {{state.profile.description}}-->
-<!--          </div>-->
 
-          <button v-if="authStore.casinoAdmin.isAdmin" class="bg-gray-800 dark:bg-gray-800 flex items-center text-white px-5 py-2 mr-2 rounded-full" @click="depositToCasino">Deposit to Casino</button>
+          <button v-if="authStore.casinoAdmin.isAdmin" class="bg-gray-800 dark:bg-gray-800 flex items-center text-white px-5 py-2 mr-2 rounded-full"
+                  @click="depositToCasino">Deposit to Casino</button>
+
           <button v-if="!authStore.hasWalletPermission"
-                  class="bg-gray-800 dark:bg-gray-800 flex items-center text-white px-5 py-2 rounded-full" @click="requestWalletAccess()">
-            <div v-html="logo" class="logo-icon"></div> Connect Sui Wallet
+                  class="bg-gray-800 dark:bg-gray-800 flex items-center text-white px-5 py-2 rounded-full"
+                  @click="authStore.toggleWalletAuthModal = true"
+          >
+            Connect Your Wallet
           </button>
 
           <button v-else class="bg-gray-300 text-gray-900 px-3 py-2 rounded-full" @click="disconnect">
@@ -102,6 +101,22 @@ const depositToCasino = async () => {
         </div>
       </div>
 
+
+    <Modal body-classes="!w-[400px] !max-w-[95%]" v-if="authStore.toggleWalletAuthModal && !authStore.hasWalletPermission"
+           @closeModal="authStore.toggleWalletAuthModal = false">
+
+
+      <p class="text-center mb-6">Please select your wallet provider</p>
+      <button v-for="provider in walletProviders" :key="provider.key"
+              class="w-full justify-center bg-gray-200 dark:bg-gray-700 flex items-center px-5 py-3 rounded-lg my-3"
+      @click="requestWalletAccess(provider.key)">
+          <div v-html="provider.logo" class="logo-icon"></div> Connect {{provider.title}}
+      </button>
+
+
+
+
+    </Modal>
   </header>
 </template>
 
