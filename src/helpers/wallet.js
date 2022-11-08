@@ -150,7 +150,5 @@ export function useWallet() {
         return window[authStore.walletProvider].executeMoveCall(params);
     }
 
-    verifyWalletPermissions();
-
     return {provider, walletProviders,verifyWalletPermissions, requestWalletAccess,getAddress,logout,executeMoveCall,getSuitableCoinId, isPermissionGranted, permissionGrantedError}
 }

@@ -17,6 +17,10 @@ const isDark = useDark();
 const toggleDark = useToggle(isDark);
 
 
+onMounted(()=>{
+  verifyWalletPermissions();
+})
+
 watch(permissionGrantedError, (val) => {
   if(val) uiStore.setNotification(val);
 });
