@@ -1,5 +1,5 @@
 <script setup>
-import {onMounted, watch} from "vue";
+import {onMounted, onUnmounted, watch} from "vue";
 import {useWallet} from "../helpers/wallet";
 import {useUiStore} from "../stores/ui";
 import {moduleAddress, moduleName, casinoAddress} from "../helpers/constants";
@@ -18,7 +18,13 @@ const toggleDark = useToggle(isDark);
 
 
 onMounted(()=>{
-  verifyWalletPermissions();
+
+  // we verify wallet permissions after window has loaded to make sure that
+  // the wallet extensions have received their state and window[walletProvider] doesnt return undefined.
+  window.addEventListener('load', verifyWalletPermissions);
+});
+onUnmounted(()=>{
+  window.removeEventListener('load', verifyWalletPermissions);
 })
 
 watch(permissionGrantedError, (val) => {
